@@ -9,11 +9,31 @@ import os
 #     for filename in filenames:
 #         print(os.path.join(dirname, filename))
 
-df_artists = pd.read_csv('../artists-data.csv')
-df_artists.head()
+df_artists = pd.read_csv('../cs224n_dataset/artists-data.csv')
+df_artists_link_genre = df_artists[['Link', 'Genre']]
+print('Number of artists with duplicate genres: ', df_artists_link_genre.duplicated(subset = 'Link', keep = 'first').value_counts()[True]) 
 
-df_artists_2c = df_artists[['Link', 'Genre']]
-df_artists_2c.head()
+df_lyrics = pd.read_csv('../cs224n_dataset/lyrics-data.csv')
+df_lyrics_en = df_lyrics.drop(df_lyrics[df_lyrics['Idiom'] !='ENGLISH'].index) #Get rid of non-English lyrics
 
+# Drop duplicates in the field 'SLink'
+df_lyrics_en.drop_duplicates(subset='SLink', keep='first', inplace=True, ignore_index=False)
+df_lyrics_nd = df_lyrics_en.drop(['SName', 'SLink', 'Idiom'], axis=1)
 
+# Discard all duplicate rows: 
+df_lyrics_nd.drop_duplicates(inplace=True)
 
+df_merged = pd.merge(df_lyrics_nd, df_artists_link_genre, how='inner', left_on='ALink', right_on='Link')
+
+df_lyric_genre = df_merged.drop(['ALink','Link'], axis=1)
+print("Genre labels", df_lyric_genre.Genre.value_counts()) #Keep only pop, rock, and hip hop
+df_lyric_genre = df_lyric_genre.drop(df_lyric_genre[ (df_lyric_genre['Genre'] == 'Sertanejo') | (df_lyric_genre['Genre'] == 'Samba') | (df_lyric_genre['Genre'] == 'Funk Carioca')].index)
+df_lyric_genre.drop_duplicates(inplace=True)
+
+# use pd.concat to join the new columns with your original dataframe
+df_lyric_genre = pd.concat([df_lyric_genre,pd.get_dummies(df_lyric_genre['Genre'])],axis=1)
+
+# now drop the original 'Genre' column (you don't need it anymore)
+df_lyric_genre.drop(['Genre'],axis=1, inplace=True)
+
+df_lyric_genre.to_csv('../cs224n_dataset/lyric-genre-data.csv', index = False)
