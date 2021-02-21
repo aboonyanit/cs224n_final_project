@@ -6,9 +6,12 @@ df_artists = pd.read_csv('../cs224n_dataset/artists-data.csv')
 df_artists_link_genre = df_artists[['Link', 'Genre']]
 print('Number of artists with duplicate genres: ', df_artists_link_genre.duplicated(subset = 'Link', keep = 'first').value_counts()[True]) 
 
+df_artists = pd.read_csv('../cs224n_dataset/artists-data.csv')
+df_artists_link_genre = df_artists[['Link', 'Genre']]
+print('Number of artists with duplicate genres: ', df_artists_link_genre.duplicated(subset = 'Link', keep = 'first').value_counts()[True]) 
+
 df_lyrics = pd.read_csv('../cs224n_dataset/lyrics-data.csv')
 df_lyrics_en = df_lyrics.drop(df_lyrics[df_lyrics['Idiom'] !='ENGLISH'].index) #Get rid of non-English lyrics
-
 # Drop duplicates in the field 'SLink'
 df_lyrics_en.drop_duplicates(subset='SLink', keep='first', inplace=True, ignore_index=False)
 df_lyrics_nd = df_lyrics_en.drop(['SName', 'SLink', 'Idiom'], axis=1)
