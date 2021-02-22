@@ -1,6 +1,9 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import numpy as np 
+import pandas as pd 
 import os
+from csv import DictReader
+
+# Generating lyric-genre-data.csv code based off: https://www.kaggle.com/nkode611/lyricsgenreclassifier-datapreprocessing
 
 df_artists = pd.read_csv('../cs224n_dataset/artists-data.csv')
 df_artists_link_genre = df_artists[['Link', 'Genre']]
@@ -33,3 +36,22 @@ df_lyric_genre = pd.concat([df_lyric_genre, pd.get_dummies(df_lyric_genre['Genre
 df_lyric_genre.drop(['Genre'],axis=1, inplace=True)
 
 df_lyric_genre.to_csv('../cs224n_dataset/lyric-genre-data.csv', index = False)
+
+f = open("lyrics.txt", "w")
+punctuation_chars = [",", ".", "\"", "?", "!"]
+with open('../cs224n_dataset/lyric-genre-data.csv', 'r') as read_obj:
+    # Write lyrics to a text file where each line in text file is lyrics for one song in order to create GloVe vectors
+    csv_dict_reader = DictReader(read_obj)
+    for row in csv_dict_reader:
+        lyrics = row['Lyric'].lower()
+        punctuation_indices = []
+        for punctuation in punctuation_chars:
+            # Get indicies of punctuation in each song
+            [punctuation_indices.append(i) for i, ltr in enumerate(lyrics) if ltr == punctuation]
+        punctuation_indices.sort()
+        for i, punctuation_ind in enumerate(punctuation_indices):
+            # Add a space between the punctuation so that each piece of punctuation is considered its own word
+            # i.e. the word "night." becomes tokenized as "night" and "."
+            lyrics = lyrics[0: punctuation_ind + i] + " " + lyrics[punctuation_ind + i: ] 
+        print(lyrics, file=f)   
+f.close()
