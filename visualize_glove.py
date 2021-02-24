@@ -29,10 +29,11 @@ def display_pca_scatterplot(model, words):
     word_vectors = np.array([model[w] for w in words])
     twodim = PCA().fit_transform(word_vectors)[:,:2]
     
-    plt.figure(figsize=(6,6))
+    plt.figure(figsize=(18, 13))
     plt.scatter(twodim[:,0], twodim[:, 1], edgecolors='k', c='r')
     for word, (x, y) in zip(words, twodim):
         plt.text(x + 0.05, y + 0.05, word)
+    plt.savefig('glove_vectors_visualization.png')
     plt.show()
 
 display_pca_scatterplot(model, top_200_words)
