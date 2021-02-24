@@ -3,11 +3,11 @@ import pandas as pd
 import os
 from csv import DictReader
 
+# This class does some data pre-processing (getting rid of duplicates, removing three genres with small
+# genre counts, merging 2 CSV files, one-hot encoding the genres) to generate lyric-genre-data.csv.
+# This class also generates lyrics.txt which tokenizes punctuation and writes lyrics to a text file 
+# where each line in text file is lyrics for one song in order to create GloVe vectors.
 # Generating lyric-genre-data.csv code based off: https://www.kaggle.com/nkode611/lyricsgenreclassifier-datapreprocessing
-
-df_artists = pd.read_csv('../cs224n_dataset/artists-data.csv')
-df_artists_link_genre = df_artists[['Link', 'Genre']]
-print('Number of artists with duplicate genres: ', df_artists_link_genre.duplicated(subset = 'Link', keep = 'first').value_counts()[True]) 
 
 df_artists = pd.read_csv('../cs224n_dataset/artists-data.csv')
 df_artists_link_genre = df_artists[['Link', 'Genre']]
@@ -26,15 +26,14 @@ df_lyrics_nd.drop_duplicates(inplace=True)
 df_merged = pd.merge(df_lyrics_nd, df_artists_link_genre, how='inner', left_on='ALink', right_on='Link')
 
 df_lyric_genre = df_merged.drop(['ALink','Link'], axis=1)
-print("Genre labels", df_lyric_genre.Genre.value_counts()) #Keep only pop, rock, and hip hop
+print("Genre labels", df_lyric_genre.Genre.value_counts()) #Keep only pop, rock, and hip hop because other genres have very small counts
 df_lyric_genre = df_lyric_genre.drop(df_lyric_genre[ (df_lyric_genre['Genre'] == 'Sertanejo') | (df_lyric_genre['Genre'] == 'Samba') | (df_lyric_genre['Genre'] == 'Funk Carioca')].index)
 df_lyric_genre.drop_duplicates(inplace=True)
 
 # One hot encode the genres (three columns - "pop", "rock", "hip hop")
 df_lyric_genre = pd.concat([df_lyric_genre, pd.get_dummies(df_lyric_genre['Genre'])],axis=1)
 # Drop the original "Genre" column 
-df_lyric_genre.drop(['Genre'],axis=1, inplace=True)
-
+df_lyric_genre.drop(['Genre'], axis=1, inplace=True)
 df_lyric_genre.to_csv('../cs224n_dataset/lyric-genre-data.csv', index = False)
 
 f = open("lyrics.txt", "w")
