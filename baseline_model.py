@@ -74,12 +74,32 @@ class LogisticRegression(nn.Module):
         super(LogisticRegression, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
+        self.linear = nn.Linear(vocab_size, n_classes)
 
     def forward(self, lyrics: List[List[str]]) -> torch.Tensor:
         # Convert list of lists into tensors
         lyrics_padded = to_input_tensor(self, lyrics, device=self.device) 
+        return self.linear(lyrics_padded)
 
 if __name__ == '__main__':
     vocab, embeddings = generate_embeddings('vectors.txt')
+    #hyperparameters
+    learning_rate = 0.5
+    epochs = 20
+    #create model
     model = LogisticRegression(len(vocab), len(embeddings[0]), embeddings, vocab)
+    model = model.to(self.device)
+
+    criterion = nn.MSELoss(size_average=False)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    #train model
+    for epoch in range(epochs):
+        model.train()
+        optimizer.zero_grad()
+        label_pred = model(lyrics)
+        loss = criterion(label_pred, labels)
+        loss.backwards()
+        optimizer.step()
+
+
 
