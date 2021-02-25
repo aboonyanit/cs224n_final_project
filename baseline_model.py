@@ -7,8 +7,20 @@ import pandas as pd
 import statistics
 from typing import List
 
+# This file creates and runs a Logistic Regression model. It contains methods necessary to generate
+# embeddings and add necessary padding. Small amounts of the code was based off of Assignment 4.
+
+
 def generate_embeddings(file_path):
-    embeddings_dict = {} # each key is word and value is vector of floats - not currenlty using it - can probably delete later
+    """ Generates an embeddings vector which contains the pre-trained GloVe vectors we generated.
+    It also generates a list of the vocabulary.
+
+    @param file_path (str): File path containing the GloVe vectors
+
+    @returns vocab: list of vocab (number of vocab words)
+    @returns embeddings: matrix of embeddings (vocabulary size, embedding dimension)
+    """
+    embeddings_dict = {} # each key is word and value is vector of floats - not currently using it - can probably delete later
     embeddings = []
     vocab = []
     with open(file_path, "r") as f:
@@ -51,6 +63,14 @@ class LogisticRegression(nn.Module):
     """ Simple Logistic Regression Model
     """
     def __init__(self, vocab_size, embedding_dim, embeddings, vocab, n_classes=3):
+        """ Init LogisticRegression Model.
+
+        @param embed_size (int): Embedding size (dimensionality)
+        @param hidden_size (int): Hidden Size, the size of hidden states (dimensionality)
+        @param vocab (Vocab): Vocabulary object containing src and tgt languages
+                              See vocab.py for documentation.
+        @param dropout_rate (float): Dropout probability, for attention
+        """
         super(LogisticRegression, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
