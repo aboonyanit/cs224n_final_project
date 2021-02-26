@@ -5,6 +5,7 @@ import csv
 import pandas as pd
 import statistics
 from typing import List
+from torch.autograd import Variable
 import torch.utils.data as data_utils
 
 # This file creates and runs a Logistic Regression model. It contains methods necessary to generate
@@ -118,31 +119,34 @@ if __name__ == '__main__':
     y_train =  torch.Tensor(y_train_csv)
 
     train_dataset = data_utils.TensorDataset(x_train, y_train)
-    train_loader = data_utils.DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_loader = data_utils.DataLoader(train_dataset, batch_size=128, shuffle=True)
     
     #hyperparameters
-    learning_rate = 0.001
-    epochs = 20
+    learning_rate = 0.00001
+    epochs = 10
 
-    # criterion = torch.nn.CrossEntropyLoss()
-    criterion = nn.MSELoss(size_average=False)
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    criterion = torch.nn.CrossEntropyLoss()
+    # criterion = nn.MSELoss()#reduction='sum')#size_average=False)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     #train model
     model.train()
     for epoch in range(epochs):
         for batch_idx, (data, targets) in enumerate(train_loader):
             data = data.to(device='cpu')
-            targets = targets.to(device='cpu')
+            # targets = targets.to(device='cpu')
+            targets = torch.argmax(targets, 1)
             y_pred = model(data)
-            # print(targets)
-            # print(y_pred)
+            # y_pred = torch.argmax(y_pred, 1)
+            # print("target",targets)
+            # print("pred",y_pred)
             # loss = criterion(y_pred, torch.max(targets, 1)[1]) - use this line to use crossentropyloss
             loss = criterion(y_pred, targets)
-            print("loss", loss)
+            print("loss", loss.item())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            # break
 
     #test model 
     eval_y_pred = model(x_test)
