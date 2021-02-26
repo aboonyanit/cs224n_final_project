@@ -156,6 +156,16 @@ if __name__ == '__main__':
     target = torch.argmax(y_test, 1)
     accuracy = ((eval_y_pred.data == target.data).float().mean())    
     print("test acc", accuracy.item())
+    
+    nb_classes = 3
+    confusion_matrix = torch.zeros(nb_classes, nb_classes)
+    with torch.no_grad():
+        for t, p in zip(target.view(-1), eval_y_pred.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+    print("confusion matrix")
+    print(confusion_matrix)
+    print("per class accuracy", confusion_matrix.diag()/confusion_matrix.sum(1))
+
 
 
 
