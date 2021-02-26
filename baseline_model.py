@@ -74,12 +74,19 @@ class LogisticRegression(nn.Module):
         super(LogisticRegression, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
-        self.linear = nn.Linear(vocab_size, n_classes)
+        self.linear = nn.Linear(4571, n_classes) #lenght of a padded sentence? - 
+        #2936 was the longest lyric length for test, 4571 is longest for training data
         self.device = torch.device("cpu")
 
     def forward(self, lyrics:torch.LongTensor ) -> torch.Tensor:#List[List[str]]
         # Convert list of lists into tensors
         # lyrics_padded = to_input_tensor(self, lyrics, device=self.device) 
+        print("forward")
+        print(lyrics.shape)
+        #(number of samples in batch/x_train, length of padded sentence) * (length of padded sentence, 3)
+        # dimensions of lyrics * dimensions of linear layer
+        #nn.Linear() expects a tensor of size (N_examples, n_features)
+        return self.linear(torch.transpose(lyrics, 0, 1))
         return self.linear(lyrics)
 
 if __name__ == '__main__':
@@ -92,16 +99,15 @@ if __name__ == '__main__':
     testCSV = pd.read_csv("../cs224n_dataset/test-data.csv")
     trainCSV = pd.read_csv("../cs224n_dataset/train-data.csv")
 
-    x_test_csv = [[i] for i in testCSV["text"].values]
-    x_train_csv = [[i] for i in trainCSV["text"].values]
+    x_test_csv = [i.split(' ') for i in testCSV["text"].values]
+    x_train_csv = [i.split(' ') for i in trainCSV["text"].values]
     y_test_csv = [float(i) for i in testCSV["label"]]
     y_train_csv = [float(i) for i in trainCSV["label"]]
-    # print(y_test_csv)
 
     x_test = torch.LongTensor(to_input_tensor(model, lyrics_list = x_test_csv, device=device))
     x_train = torch.LongTensor(to_input_tensor(model, lyrics_list =x_train_csv, device=device))    
     y_test = torch.Tensor(y_test_csv)
-    y_train =  torch.Tensor( y_train_csv)
+    y_train =  torch.Tensor(y_train_csv)
     
     #hyperparameters
     learning_rate = 0.5
@@ -112,6 +118,7 @@ if __name__ == '__main__':
 
     #train model
     for epoch in range(epochs):
+        print("epoch")
         model.train()
         optimizer.zero_grad()
         y_pred = model(x_train)

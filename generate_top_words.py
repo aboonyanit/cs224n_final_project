@@ -35,29 +35,46 @@ hiphop_counts = []
 top_words = [a_tuple[0] for a_tuple in pop_words_dict.most_common(300)] + [a_tuple[0] for a_tuple in hiphop_words_dict.most_common(300)]
 for word_pair in rock_words_dict.most_common(300):
     if word_pair[0] not in top_words:
-        # print(key)
-        # print(value)
         hiphop_words.append(word_pair[0])
         hiphop_counts.append(word_pair[1])
 fig = plt.figure()
 # ax = fig.add_axes([0,0,1,1])
 print(hiphop_words)
 print(hiphop_counts)
+print(len(hiphop_words))
 plt.bar(hiphop_words, hiphop_counts)
 plt.show()
 
 print("pop")
+pop_words = []
+pop_counts = []
 top_words = [a_tuple[0] for a_tuple in rock_words_dict.most_common(300)] + [a_tuple[0] for a_tuple in hiphop_words_dict.most_common(300)]
-for key, value in pop_words_dict.most_common(300):
-    if key not in top_words:
-        print(key)
-        print(value)
-rock_words_dict
+for word_pair in pop_words_dict.most_common(300):
+    if word_pair[0] not in top_words:
+        pop_words.append(word_pair[0])
+        pop_counts.append(word_pair[1])
+
+fig = plt.figure()
+# ax = fig.add_axes([0,0,1,1])
+print(pop_words)
+print(pop_counts)
+print(len(pop_words))
+plt.bar(pop_words, pop_counts)
+plt.show()
+
 print("hip hop")
+hiphop_words = []
+hiphop_counts = []
 top_words = [a_tuple[0] for a_tuple in pop_words_dict.most_common(200)] + [a_tuple[0] for a_tuple in rock_words_dict.most_common(200)]
-for key, value in hiphop_words_dict.most_common(200):
-    if key not in top_words:
-        print(key)
-        print(value)
+for word_pair in hiphop_words_dict.most_common(300):
+    if word_pair[0] not in top_words and word_pair[0] != "[verse" and word_pair[0] != "[chorus]":
+        hiphop_words.append(word_pair[0])
+        hiphop_counts.append(word_pair[1])
 
-
+fig = plt.figure()
+# ax = fig.add_axes([0,0,1,1])
+print(hiphop_words)
+print(hiphop_counts)
+print(len(hiphop_words))
+plt.bar(hiphop_words[0: 25], hiphop_counts[0: 25])
+plt.show()
