@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from torchtext.data import Field, TabularDataset, BucketIterator
 import spacy
 import csv
 import pandas as pd
 import statistics
 from typing import List
+import torch.utils.data as data_utils
 
 # This file creates and runs a Logistic Regression model. It contains methods necessary to generate
 # embeddings and add necessary padding. Small amounts of the code was based off of Assignment 4.
@@ -46,18 +46,22 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) ->
     """
     lyrics_var = []
     # longest_lyric_len = len(max(lyrics_list, key=len))
-    longest_lyric_len = 4571
+    # longest_lyric_len = 4571
+    longest_lyric_len = 500
     for lyrics in lyrics_list:
         num_pads_to_add = longest_lyric_len - len(lyrics)
         lyrics_indicies = []
-        for word in lyrics:
+        for i, word in enumerate(lyrics):
             if word not in self.word2indicies.keys():
                 lyrics_indicies.append(self.word2indicies['<unk>'])
             else:
                 lyrics_indicies.append(self.word2indicies[word])
+            if i == 499:
+                break
         lyrics_indicies += ([self.word2indicies['<pad>']] * num_pads_to_add)
         lyrics_var.append(lyrics_indicies)
     lyrics_var = torch.tensor(lyrics_var, dtype=torch.float, device=device)
+    print(lyrics_var.shape)
     return lyrics_var
     # return torch.t(lyrics_var) - this was used in a4 idk why
 
@@ -76,7 +80,8 @@ class LogisticRegression(nn.Module):
         super(LogisticRegression, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
-        self.linear = nn.Linear(4571, n_classes) #length of a padded sentence? - 
+        self.linear = nn.Linear(500, n_classes) #length of a padded sentence? - 
+        # self.linear = nn.Linear(4571, n_classes) #length of a padded sentence? - 
         # 4571 is longest lyrics
         self.device = torch.device("cpu")
 
@@ -111,22 +116,33 @@ if __name__ == '__main__':
     x_train = torch.FloatTensor(to_input_tensor(model, lyrics_list =x_train_csv, device=device))    
     y_test = torch.Tensor(y_test_csv)
     y_train =  torch.Tensor(y_train_csv)
+
+    train_dataset = data_utils.TensorDataset(x_train, y_train)
+    train_loader = data_utils.DataLoader(train_dataset, batch_size=64, shuffle=True)
     
     #hyperparameters
-    learning_rate = 0.5
+    learning_rate = 0.001
     epochs = 20
 
+    # criterion = torch.nn.CrossEntropyLoss()
     criterion = nn.MSELoss(size_average=False)
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
     #train model
+    model.train()
     for epoch in range(epochs):
-        model.train()
-        y_pred = model(x_train)
-        loss = criterion(y_pred, y_train)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        for batch_idx, (data, targets) in enumerate(train_loader):
+            data = data.to(device='cpu')
+            targets = targets.to(device='cpu')
+            y_pred = model(data)
+            # print(targets)
+            # print(y_pred)
+            # loss = criterion(y_pred, torch.max(targets, 1)[1]) - use this line to use crossentropyloss
+            loss = criterion(y_pred, y_train)
+            print("loss", loss)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
     #test model 
     eval_y_pred = model(x_test)
