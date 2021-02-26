@@ -35,6 +35,7 @@ df_lyric_genre.to_csv('../cs224n_dataset/lyric-genre-data.csv', index = False)
 f = open("lyrics.txt", "w")
 f1 = open("../cs224n_dataset/lyric-genre-data-punctuation-separated.csv", "w")
 filewriter = csv.writer(f1)
+filewriter.writerow(df_lyric_genre.columns) #??
 punctuation_chars = [",", ".", "\"", "?", "!"]
 with open('../cs224n_dataset/lyric-genre-data.csv', 'r') as read_obj:
     # Write lyrics to a text file where each line in text file is lyrics for one song in order to create GloVe vectors
