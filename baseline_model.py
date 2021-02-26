@@ -138,7 +138,7 @@ if __name__ == '__main__':
             # print(targets)
             # print(y_pred)
             # loss = criterion(y_pred, torch.max(targets, 1)[1]) - use this line to use crossentropyloss
-            loss = criterion(y_pred, y_train)
+            loss = criterion(y_pred, targets)
             print("loss", loss)
             optimizer.zero_grad()
             loss.backward()
