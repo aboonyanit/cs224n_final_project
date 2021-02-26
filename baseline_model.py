@@ -48,7 +48,7 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) ->
     longest_lyric_len = len(max(lyrics_list, key=len))
     for lyrics in lyrics_list:
         num_pads_to_add = longest_lyric_len - len(lyrics)
-        lyrics += ["<pad>"] * num_pads_to_add
+        lyrics = list(lyrics) + (["<pad>"] * num_pads_to_add)
         lyrics_indicies = []
         for word in lyrics:
             if word not in self.word2indicies.keys():
@@ -75,31 +75,52 @@ class LogisticRegression(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
         self.linear = nn.Linear(vocab_size, n_classes)
+        self.device = torch.device("cpu")
 
-    def forward(self, lyrics: List[List[str]]) -> torch.Tensor:
+    def forward(self, lyrics:torch.LongTensor ) -> torch.Tensor:#List[List[str]]
         # Convert list of lists into tensors
-        lyrics_padded = to_input_tensor(self, lyrics, device=self.device) 
-        return self.linear(lyrics_padded)
+        # lyrics_padded = to_input_tensor(self, lyrics, device=self.device) 
+        return self.linear(lyrics)
 
 if __name__ == '__main__':
     vocab, embeddings = generate_embeddings('vectors.txt')
+    #create model
+    device = torch.device('cpu')
+    model = LogisticRegression(len(vocab), len(embeddings[0]), embeddings, vocab)
+    model = model.to(device)
+    # get data
+    testCSV = pd.read_csv("../cs224n_dataset/test-data.csv")
+    trainCSV = pd.read_csv("../cs224n_dataset/train-data.csv")
+
+    x_test_csv = [[i] for i in testCSV["text"].values]
+    x_train_csv = [[i] for i in trainCSV["text"].values]
+    y_test_csv = [float(i) for i in testCSV["label"]]
+    y_train_csv = [float(i) for i in trainCSV["label"]]
+    # print(y_test_csv)
+
+    x_test = torch.LongTensor(to_input_tensor(model, lyrics_list = x_test_csv, device=device))
+    x_train = torch.LongTensor(to_input_tensor(model, lyrics_list =x_train_csv, device=device))    
+    y_test = torch.Tensor(y_test_csv)
+    y_train =  torch.Tensor( y_train_csv)
+    
     #hyperparameters
     learning_rate = 0.5
     epochs = 20
-    #create model
-    model = LogisticRegression(len(vocab), len(embeddings[0]), embeddings, vocab)
-    model = model.to(self.device)
 
     criterion = nn.MSELoss(size_average=False)
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
     #train model
     for epoch in range(epochs):
         model.train()
         optimizer.zero_grad()
-        label_pred = model(lyrics)
-        loss = criterion(label_pred, labels)
+        y_pred = model(x_train)
+        loss = criterion(y_pred, y_train)
         loss.backwards()
         optimizer.step()
+
+    #test model 
+    eval_y_pred = model(x_test)
 
 
 
