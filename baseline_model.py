@@ -45,7 +45,8 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) ->
     @returns lyrics_var: tensor of (longest_lyric_len, batch_size)
     """
     lyrics_var = []
-    longest_lyric_len = len(max(lyrics_list, key=len))
+    # longest_lyric_len = len(max(lyrics_list, key=len))
+    longest_lyric_len = 4571
     for lyrics in lyrics_list:
         num_pads_to_add = longest_lyric_len - len(lyrics)
         lyrics_indicies = []
@@ -57,7 +58,8 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) ->
         lyrics_indicies += ([self.word2indicies['<pad>']] * num_pads_to_add)
         lyrics_var.append(lyrics_indicies)
     lyrics_var = torch.tensor(lyrics_var, dtype=torch.float, device=device)
-    return torch.t(lyrics_var)
+    return lyrics_var
+    # return torch.t(lyrics_var) - this was used in a4 idk why
 
 class LogisticRegression(nn.Module):
     """ Simple Logistic Regression Model
@@ -75,18 +77,13 @@ class LogisticRegression(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
         self.linear = nn.Linear(4571, n_classes) #length of a padded sentence? - 
-        #2936 was the longest lyric length for test, 4571 is longest for training data
+        # 4571 is longest lyrics
         self.device = torch.device("cpu")
 
     def forward(self, lyrics:torch.LongTensor ) -> torch.Tensor:#List[List[str]]
         # Convert list of lists into tensors
-        # lyrics_padded = to_input_tensor(self, lyrics, device=self.device) 
-        print("forward")
-        print(lyrics.shape)
         #(number of samples in batch/x_train, length of padded sentence) * (length of padded sentence, 3)
         # dimensions of lyrics * dimensions of linear layer
-        #nn.Linear() expects a tensor of size (N_examples, n_features)
-        return self.linear(torch.transpose(lyrics, 0, 1))
         return self.linear(lyrics)
 
 if __name__ == '__main__':
@@ -99,10 +96,16 @@ if __name__ == '__main__':
     testCSV = pd.read_csv("../cs224n_dataset/test-data.csv")
     trainCSV = pd.read_csv("../cs224n_dataset/train-data.csv")
 
-    x_test_csv = [i.split(' ') for i in testCSV["text"].values]
-    x_train_csv = [i.split(' ') for i in trainCSV["text"].values]
-    y_test_csv = [float(i) for i in testCSV["label"]]
-    y_train_csv = [float(i) for i in trainCSV["label"]]
+    x_test_csv = [i.split(' ') for i in testCSV["Lyric"].values]
+    x_train_csv = [i.split(' ') for i in trainCSV["Lyric"].values]
+    y_train_csv = []
+    y_test_csv = []
+    for index, row in trainCSV.iterrows():
+        y_train_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
+    for index, row in testCSV.iterrows():
+        y_test_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
+    # y_test_csv = [float(i) for i in testCSV["label"]]
+    # y_train_csv = [float(i) for i in trainCSV["label"]]
 
     x_test = torch.FloatTensor(to_input_tensor(model, lyrics_list = x_test_csv, device=device))
     x_train = torch.FloatTensor(to_input_tensor(model, lyrics_list =x_train_csv, device=device))    
@@ -118,12 +121,11 @@ if __name__ == '__main__':
 
     #train model
     for epoch in range(epochs):
-        print("epoch")
         model.train()
-        optimizer.zero_grad()
         y_pred = model(x_train)
         loss = criterion(y_pred, y_train)
-        loss.backwards()
+        optimizer.zero_grad()
+        loss.backward()
         optimizer.step()
 
     #test model 

@@ -29,7 +29,12 @@ df_lyric_genre = df_lyric_genre.drop(df_lyric_genre[ (df_lyric_genre['Genre'] ==
 df_lyric_genre.drop_duplicates(inplace=True)
 
 # Ordinal encode the genres b/c output column
-df_lyric_genre.Genre = df_lyric_genre.Genre.replace({'Pop': 1, 'Rock': 2, 'Hip Hop': 3})
+# df_lyric_genre.Genre = df_lyric_genre.Genre.replace({'Pop': 1, 'Rock': 2, 'Hip Hop': 3})
+# use pd.concat to join the new columns with your original dataframe
+df_lyric_genre = pd.concat([df_lyric_genre,pd.get_dummies(df_lyric_genre['Genre'])],axis=1)
+
+# now drop the original 'Genre' column (you don't need it anymore)
+df_lyric_genre.drop(['Genre'],axis=1, inplace=True)
 df_lyric_genre.to_csv('../cs224n_dataset/lyric-genre-data.csv', index = False)
 
 f = open("lyrics.txt", "w")
@@ -51,7 +56,7 @@ with open('../cs224n_dataset/lyric-genre-data.csv', 'r') as read_obj:
             # Add a space between the punctuation so that each piece of punctuation is considered its own word
             # i.e. the word "night." becomes tokenized as "night" and "."
             lyrics = lyrics[0: punctuation_ind + i] + " " + lyrics[punctuation_ind + i: ] 
-        filewriter.writerow([lyrics, row['Genre']])
+        filewriter.writerow([lyrics, row['Hip Hop'], row['Pop'], row['Rock']])
         print(lyrics, file=f)   
 f.close()
 f1.close()
