@@ -93,6 +93,7 @@ class LogisticRegression(nn.Module):
         return self.linear(lyrics)
 
 if __name__ == '__main__':
+    print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     #create model
     device = torch.device('cpu')
@@ -126,10 +127,11 @@ if __name__ == '__main__':
     epochs = 10
 
     criterion = torch.nn.CrossEntropyLoss()
-    # criterion = nn.MSELoss()#reduction='sum')#size_average=False)
+    # criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     #train model
+    print("training...")
     model.train()
     for epoch in range(epochs):
         for batch_idx, (data, targets) in enumerate(train_loader):
@@ -138,18 +140,22 @@ if __name__ == '__main__':
             targets = torch.argmax(targets, 1)
             y_pred = model(data)
             # y_pred = torch.argmax(y_pred, 1)
-            # print("target",targets)
-            # print("pred",y_pred)
             # loss = criterion(y_pred, torch.max(targets, 1)[1]) - use this line to use crossentropyloss
             loss = criterion(y_pred, targets)
-            print("loss", loss.item())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            # accuracy = torch.argmax(y_pred, 1)
+        print("loss", loss.item())
             # break
 
     #test model 
+    print("testing...")
     eval_y_pred = model(x_test)
+    eval_y_pred = torch.argmax(eval_y_pred, 1)
+    target = torch.argmax(y_test, 1)
+    accuracy = ((eval_y_pred.data == target.data).float().mean())    
+    print("test acc", accuracy.item())
 
 
 
