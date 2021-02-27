@@ -10,6 +10,8 @@ import torch.utils.data as data_utils
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch.nn.functional as F
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 # This file creates and runs a Logistic Regression model. It contains methods necessary to generate
 # embeddings and add necessary padding. Small amounts of the code was based off of Assignment 4.
@@ -111,6 +113,26 @@ class LSTM_model(nn.Module):
         return out
 
 if __name__ == '__main__':
+    # test model on val set
+    def validation_metrics (model, valid_dl):
+        model.eval()
+        correct = 0
+        total = 0
+        sum_loss = 0.0
+        sum_rmse = 0.0
+        for x, y, l in valid_dl:
+            x = x.long()
+            y = torch.argmax(y, 1)
+            y = y.long()
+            y_hat = model(x, l)
+            loss = F.cross_entropy(y_hat, y)
+            pred = torch.max(y_hat, 1)[1]
+            correct += (pred == y).float().sum()
+            total += y.shape[0]
+            sum_loss += loss.item()*y.shape[0]
+            sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
+        return sum_loss/total, correct/total, sum_rmse/total
+    
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     #create model
@@ -172,25 +194,7 @@ if __name__ == '__main__':
         print("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (sum_loss/total, val_loss, val_acc, val_rmse))
        
 
-# test model on val set
-def validation_metrics (model, valid_dl):
-    model.eval()
-    correct = 0
-    total = 0
-    sum_loss = 0.0
-    sum_rmse = 0.0
-    for x, y, l in valid_dl:
-        x = x.long()
-        y = y.long()
-        y_hat = model(x, l)
-        loss = F.cross_entropy(y_hat, y)
-        pred = torch.max(y_hat, 1)[1]
-        correct += (pred == y).float().sum()
-        total += y.shape[0]
-        sum_loss += loss.item()*y.shape[0]
-        sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
-    return sum_loss/total, correct/total, sum_rmse/total
-    
+
     # nb_classes = 3
     # confusion_matrix = torch.zeros(nb_classes, nb_classes)
     # with torch.no_grad():
