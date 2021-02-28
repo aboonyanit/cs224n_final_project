@@ -41,7 +41,7 @@ def generate_embeddings(file_path):
     embeddings.append([0] * 100) # Currently made the pad token 100 0's but can change that
     return vocab, embeddings
     
-def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) -> torch.Tensor:
+def to_input_tensor(self, lyrics_list: List[List[str]], device) -> torch.Tensor:
     """ Convert list of sentences (words) into tensor with necessary padding for 
     shorter sentences.
 
@@ -66,20 +66,22 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) ->
                 break
         lyrics_indicies += ([self.word2indicies['<pad>']] * num_pads_to_add)
         lyrics_var.append(lyrics_indicies)
-    lyrics_var = torch.tensor(lyrics_var, dtype=torch.float, device=device)
+    lyrics_var = torch.FloatTensor(lyrics_var).to(device)
+
     print(lyrics_var.shape)
     return lyrics_var
     # return torch.t(lyrics_var) - this was used in a4 idk why
 class ReviewsDataset(Dataset):
     def __init__(self, X, Y):
-        self.X = X
-        self.y = Y
+        self.X = X.to(device)
+        self.y = Y.to(device)
         
     def __len__(self):
         return len(self.y)
     
     def __getitem__(self, idx):
-        return torch.FloatTensor(self.X[idx]), self.y[idx], len(self.X[idx])
+       # tempx = torch.FloatTensor(self.X[idx]).to(device)
+        return self.X[idx], self.y[idx], len(self.X[idx])
 
 class LSTM_model(nn.Module):
     """ Simple LSTM
@@ -99,7 +101,8 @@ class LSTM_model(nn.Module):
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.linear = nn.Linear(hidden_dim, 5)
         self.dropout = nn.Dropout(0.2)
-        self.device = torch.device("cpu")
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
     def forward(self, lyrics:torch.LongTensor, totalLen ) -> torch.Tensor:#List[List[str]]
         # Convert list of lists into tensors
@@ -109,7 +112,8 @@ class LSTM_model(nn.Module):
         x = self.dropout(x)
         x_pack = pack_padded_sequence(x, totalLen, batch_first=True, enforce_sorted=False)
         out_pack, (ht, ct) = self.lstm(x_pack)
-        out = self.linear(ht[-1])
+        out = self.linear(ht[-1]).to(device)
+        
         return out
 
 if __name__ == '__main__':
@@ -127,6 +131,8 @@ if __name__ == '__main__':
             y_hat = model(x, l)
             loss = F.cross_entropy(y_hat, y)
             pred = torch.max(y_hat, 1)[1]
+            pred = pred.cpu()
+            y=y.cpu()
             correct += (pred == y).float().sum()
             total += y.shape[0]
             sum_loss += loss.item()*y.shape[0]
@@ -136,7 +142,8 @@ if __name__ == '__main__':
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     #create model
-    device = torch.device('cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
     model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, hidden_dim=50)
     model = model.to(device)
     # get data
@@ -153,11 +160,14 @@ if __name__ == '__main__':
         y_val_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
     # y_val_csv = [float(i) for i in valCSV["label"]]
     # y_train_csv = [float(i) for i in trainCSV["label"]]
-
-    x_val = torch.FloatTensor(to_input_tensor(model, lyrics_list = x_val_csv, device=device))
-    x_train = torch.FloatTensor(to_input_tensor(model, lyrics_list =x_train_csv, device=device))    
-    y_val = torch.Tensor(y_val_csv)
-    y_train =  torch.Tensor(y_train_csv)
+    #x_val_csv=x_val_csv.cuda()
+    #x_train_csv=x_train_csv.cuda()
+    x_val = to_input_tensor(model, lyrics_list = x_val_csv, device=device).to(device)
+    #x_val = torch.FloatTensor(tval).to(device)
+    x_train = to_input_tensor(model, lyrics_list = x_train_csv, device=device).to(device)
+    #x_train = torch.FloatTensor(ttrain).to(device)
+    y_val = torch.Tensor(y_val_csv).to(device)
+    y_train =  torch.Tensor(y_train_csv).to(device)
 
     train_dataset = ReviewsDataset(x_train, y_train)
     val_dataset = ReviewsDataset(x_val, y_val)
@@ -173,7 +183,7 @@ if __name__ == '__main__':
     print("training...")
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     for i in range(epochs):
-        print("epoch ", str(i))
+        #print("epoch ", str(i))
         model.train()
         sum_loss = 0.0
         total = 0
@@ -188,10 +198,10 @@ if __name__ == '__main__':
             optimizer.step()
             sum_loss += loss.item()*y.shape[0]
             total += y.shape[0]
-            print("train loss ", sum_loss/total)
+           # print("train loss ", sum_loss/total)
         val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
-        # if i % 5 == 1:
-        print("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (sum_loss/total, val_loss, val_acc, val_rmse))
+        #if i % 5 == 1:
+        print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
        
 
 
