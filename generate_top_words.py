@@ -41,9 +41,9 @@ with open('../cs224n_dataset/lyric-genre-data-punctuation-separated.csv', 'r') a
     csv_dict_reader = csv.DictReader(read_obj)
     for row in csv_dict_reader:
         lyrics = row['Lyric'].split(" ")
-        if row['Genre'] == '1':
+        if row['Pop'] == '1':
             pop_words += lyrics
-        elif row['Genre'] == '2':
+        elif row['Rock'] == '1':
             rock_words += lyrics
         else:
             hiphop_words += lyrics
