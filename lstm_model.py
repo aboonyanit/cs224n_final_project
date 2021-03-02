@@ -12,6 +12,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch.nn.functional as F
 import numpy as np
 from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 
 # This file creates and runs a Logistic Regression model. It contains methods necessary to generate
 # embeddings and add necessary padding. Small amounts of the code was based off of Assignment 4.
@@ -70,7 +71,6 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device) -> torch.Tensor:
 
     print(lyrics_var.shape)
     return lyrics_var
-    # return torch.t(lyrics_var) - this was used in a4 idk why
 class ReviewsDataset(Dataset):
     def __init__(self, X, Y):
         self.X = X.to(device)
@@ -158,8 +158,6 @@ if __name__ == '__main__':
         y_train_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
     for index, row in valCSV.iterrows():
         y_val_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
-    # y_val_csv = [float(i) for i in valCSV["label"]]
-    # y_train_csv = [float(i) for i in trainCSV["label"]]
     #x_val_csv=x_val_csv.cuda()
     #x_train_csv=x_train_csv.cuda()
     x_val = to_input_tensor(model, lyrics_list = x_val_csv, device=device).to(device)
@@ -176,14 +174,17 @@ if __name__ == '__main__':
 
     #hyperparameters
     learning_rate = 0.00001
-    epochs = 10
+    epochs = 2
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    epochs_arr = []
+    train_losses = []
 
     #train model
     print("training...")
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     for i in range(epochs):
         #print("epoch ", str(i))
+        epochs_arr.append(i)
         model.train()
         sum_loss = 0.0
         total = 0
@@ -200,8 +201,10 @@ if __name__ == '__main__':
             total += y.shape[0]
            # print("train loss ", sum_loss/total)
         val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
-        #if i % 5 == 1:
+        train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
+    plt.plot(epochs_arr, train_losses)
+    plt.savefig('train_loss.png')
        
 
 
