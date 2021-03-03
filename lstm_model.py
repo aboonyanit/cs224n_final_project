@@ -190,7 +190,7 @@ if __name__ == '__main__':
             train_losses = []
 
             #train model
-            print("training...")
+            print("training on lr "+str(learning_rate)+" batch "+str(batch_size)+" ...")
             parameters = filter(lambda p: p.requires_grad, model.parameters())
             for i in range(epochs):
                 epochs_arr.append(i)
