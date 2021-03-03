@@ -54,18 +54,18 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device) -> torch.Tensor:
     lyrics_var = []
     # longest_lyric_len = len(max(lyrics_list, key=len))
     # longest_lyric_len = 4571
-    longest_lyric_len = 500
+    # longest_lyric_len = 500
     for lyrics in lyrics_list:
-        num_pads_to_add = longest_lyric_len - len(lyrics)
+        # num_pads_to_add = longest_lyric_len - len(lyrics)
         lyrics_indicies = []
         for i, word in enumerate(lyrics):
             if word not in self.word2indicies.keys():
                 lyrics_indicies.append(self.word2indicies['<unk>'])
             else:
                 lyrics_indicies.append(self.word2indicies[word])
-            if i == 499:
-                break
-        lyrics_indicies += ([self.word2indicies['<pad>']] * num_pads_to_add)
+        #     if i == 499:
+        #         break
+        # lyrics_indicies += ([self.word2indicies['<pad>']] * num_pads_to_add)
         lyrics_var.append(lyrics_indicies)
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
 
