@@ -158,7 +158,7 @@ if __name__ == '__main__':
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, num_layers=2, hidden_dim=100)
+    model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, num_layers=1, hidden_dim=50)
     model = model.to(device)
     # get data
     valCSV = pd.read_csv("../cs224n_dataset/validation-data.csv")
