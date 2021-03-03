@@ -68,6 +68,47 @@ def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, devi
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
     return lyrics_var
 
+def validation_metrics (model, valid_dl):
+        # test model on val set
+        model.eval()
+        correct = 0
+        total = 0
+        sum_loss = 0.0
+        sum_rmse = 0.0
+        nb_classes = 3
+        confusion_matrix = torch.zeros(nb_classes, nb_classes)
+        index = 0
+        for x, y, l in valid_dl:
+            x = x.long()
+            y = torch.argmax(y, 1)
+            y = y.long()
+            y_hat = model(x, l)
+            loss = F.cross_entropy(y_hat, y)
+            pred = torch.max(y_hat, 1)[1]
+            pred = pred.cpu()
+            y=y.cpu()
+            for t, p in zip(y.view(-1), pred.view(-1)):
+                # print("t", t)
+                # print("p", p)
+                if p <= 2:
+                    #this should not be necessary
+                    confusion_matrix[t.long(), p.long()] += 1
+                else:
+                    print("greater")
+                index += 1
+            correct += (pred == y).float().sum()
+            total += y.shape[0]
+            sum_loss += loss.item()*y.shape[0]
+            sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
+        print(confusion_matrix)
+        print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
+
+        # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
+        # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
+        # plt.show()
+
+        return sum_loss/total, correct/total, sum_rmse/total
+    
 class LyricsDataset(Dataset):
     def __init__(self, X, Y):
         self.X = X.to(device)
@@ -110,48 +151,6 @@ class LSTM_model(nn.Module):
         out = self.linear(hidden_state[-1]).to(device)
         out = self.relu(out)
         return out
-
-    def validation_metrics (model, valid_dl):
-        # test model on val set
-        model.eval()
-        correct = 0
-        total = 0
-        sum_loss = 0.0
-        sum_rmse = 0.0
-        nb_classes = 3
-        confusion_matrix = torch.zeros(nb_classes, nb_classes)
-        index = 0
-        for x, y, l in valid_dl:
-            x = x.long()
-            y = torch.argmax(y, 1)
-            y = y.long()
-            y_hat = model(x, l)
-            loss = F.cross_entropy(y_hat, y)
-            pred = torch.max(y_hat, 1)[1]
-            pred = pred.cpu()
-            y=y.cpu()
-            for t, p in zip(y.view(-1), pred.view(-1)):
-                # print("t", t)
-                # print("p", p)
-                if p <= 2:
-                    #this should not be necessary
-                    confusion_matrix[t.long(), p.long()] += 1
-                else:
-                    print("greater")
-                index += 1
-            correct += (pred == y).float().sum()
-            total += y.shape[0]
-            sum_loss += loss.item()*y.shape[0]
-            sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
-        print(confusion_matrix)
-        print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
-
-        # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
-        # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
-        # plt.show()
-
-        return sum_loss/total, correct/total, sum_rmse/total
-    
 
 if __name__ == '__main__':
     print('initializing...')
