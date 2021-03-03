@@ -140,7 +140,7 @@ class LSTM_model(nn.Module):
         #                     hidden_size=hidden_dim,
         #                     num_layers=1, 
         #                     bidirectional=True)
-        self.linear = nn.Linear(hidden_dim * 2, n_classes) #changed this from 5 to n_classes
+        self.linear = nn.Linear(hidden_dim * 2, n_classes)
         self.dropout = nn.Dropout(0.2)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.num_layers = num_layers
@@ -153,14 +153,14 @@ class LSTM_model(nn.Module):
         x = self.embedding(lyrics)
         x = self.dropout(x)
         x_pack = pack_padded_sequence(x, totalLen, batch_first=True, enforce_sorted=False)
-        h0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(device) # 2 for bidirection 
-        c0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(device)
+        # h0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(device) # 2 for bidirection 
+        # c0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_dim).to(device)
         out_pack, (hidden_state, cell_state) = self.lstm(x_pack, (h0, c0))
-        output_unpacked, output_lengths = pad_packed_sequence(out_pack, batch_first=True)
+        #output_unpacked, output_lengths = pad_packed_sequence(out_pack, batch_first=True)
         # out_pack, (hidden_state, cell_state) = self.lstm2(x)
 
-        # out = self.linear(hidden_state[-1]).to(device)
-        out = self.linear(output_unpacked[:, -1, :]).to(device)
+        out = self.linear(hidden_state[-1]).to(device)
+        #out = self.linear(output_unpacked[:, -1, :]).to(device)
         return out
 
 if __name__ == '__main__':
