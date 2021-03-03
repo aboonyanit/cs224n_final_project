@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     #hyperparameters
     learning_rate = 0.00001
-    epochs = 2
+    epochs = 150
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     epochs_arr = []
     train_losses = []
