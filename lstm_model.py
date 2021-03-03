@@ -133,6 +133,8 @@ if __name__ == '__main__':
             pred = pred.cpu()
             y=y.cpu()
             for t, p in zip(y.view(-1), pred.view(-1)):
+                print("t", t)
+                print("p", p)
                 confusion_matrix[t.long(), p.long()] += 1
                 index += 1
             print(confusion_matrix)
