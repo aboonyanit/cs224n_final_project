@@ -106,8 +106,8 @@ class LSTM_model(nn.Module):
         # dimensions of lyrics * dimensions of linear layer
         x = self.embedding(lyrics)
         x = self.dropout(x)
-        x_pack = pack_padded_sequence(x, totalLen, batch_first=True, enforce_sorted=False)
-        out_pack, (ht, ct) = self.lstm(x_pack)
+        # x_pack = pack_padded_sequence(x, totalLen, batch_first=True, enforce_sorted=False)
+        out_pack, (ht, ct) = self.lstm(x)
         out = self.linear(ht[-1]).to(device)
         
         return out
@@ -187,13 +187,13 @@ if __name__ == '__main__':
             y = torch.argmax(y, 1)
             y = y.long()
             lengths_without_pad = []
-            for elem in x.tolist():
-                if pad_token_index in elem:
-                    lengths_without_pad.append(elem.index(pad_token_index))
-                else:
-                    lengths_without_pad.append(max_len_padded_seq)
-            y_pred = model(x, torch.LongTensor(lengths_without_pad))
-            # y_pred = model(x, l)
+            # for elem in x.tolist():
+            #     if pad_token_index in elem:
+            #         lengths_without_pad.append(elem.index(pad_token_index))
+            #     else:
+            #         lengths_without_pad.append(max_len_padded_seq)
+            # y_pred = model(x, torch.LongTensor(lengths_without_pad))
+            y_pred = model(x, l)
             optimizer.zero_grad()
             loss = F.cross_entropy(y_pred, y)
             loss.backward()
