@@ -192,7 +192,8 @@ if __name__ == '__main__':
                     lengths_without_pad.append(elem.index(pad_token_index))
                 else:
                     lengths_without_pad.append(max_len_padded_seq)
-            y_pred = model(x, torch.LongTensor(lengths_without_pad))
+            # y_pred = model(x, torch.LongTensor(lengths_without_pad))
+            y_pred = model(x, l)
             optimizer.zero_grad()
             loss = F.cross_entropy(y_pred, y)
             loss.backward()
@@ -203,8 +204,9 @@ if __name__ == '__main__':
         val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
         train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
-    plt.plot(epochs_arr, train_losses)
-    plt.savefig('train_loss.png')
+        plt.plot(epochs_arr, train_losses)
+        plt.savefig('train_loss.png')   
+
 
     # nb_classes = 3
     # confusion_matrix = torch.zeros(nb_classes, nb_classes)
