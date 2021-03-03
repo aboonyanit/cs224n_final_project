@@ -34,7 +34,7 @@ def generate_embeddings(file_path):
         for line in f:
             split_line = line.split(" ")
             vector = [float(i) for i in split_line[1: ]]
-            embeddings_dict[split_line[0]] = vector
+            embeddings_dict[split_line[0]] = np.asarray(vector)
             embeddings.append(vector)
             vocab.append(split_line[0])
             #Add unk token to dictionary
@@ -139,7 +139,6 @@ class LSTM_model(nn.Module):
         self.linear = nn.Linear(hidden_dim, n_classes) #changed this from 5 to n_classes
         self.dropout = nn.Dropout(0.2)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        self.relu = nn.ReLU() 
 
 
     def forward(self, lyrics:torch.LongTensor, totalLen ) -> torch.Tensor:#List[List[str]]
@@ -149,7 +148,6 @@ class LSTM_model(nn.Module):
         x_pack = pack_padded_sequence(x, totalLen, batch_first=True, enforce_sorted=False)
         out_pack, (hidden_state, cell_state) = self.lstm(x)
         out = self.linear(hidden_state[-1]).to(device)
-        out = self.relu(out)
         return out
 
 if __name__ == '__main__':
@@ -160,7 +158,7 @@ if __name__ == '__main__':
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, num_layers=2, hidden_dim=50)
+    model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, num_layers=2, hidden_dim=100)
     model = model.to(device)
     # get data
     valCSV = pd.read_csv("../cs224n_dataset/validation-data.csv")
