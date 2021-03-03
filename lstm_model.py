@@ -138,7 +138,7 @@ if __name__ == '__main__':
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     pad_token_index = len(vocab) - 1
-    max_len_padded_seq = 600
+    max_len_padded_seq = 500
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -192,7 +192,6 @@ if __name__ == '__main__':
                     lengths_without_pad.append(elem.index(pad_token_index))
                 else:
                     lengths_without_pad.append(max_len_padded_seq)
-            print(lengths_without_pad)
             y_pred = model(x, torch.LongTensor(lengths_without_pad))
             optimizer.zero_grad()
             loss = F.cross_entropy(y_pred, y)
