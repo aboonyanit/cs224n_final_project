@@ -82,7 +82,7 @@ class ReviewsDataset(Dataset):
 class LSTM_model(nn.Module):
     """ Simple LSTM
     """
-    def __init__(self, vocab_size, embedding_dim, embeddings, vocab, hidden_dim,n_classes=3):
+    def __init__(self, vocab_size, embedding_dim, embeddings, vocab, hidden_dim, n_classes=3):
         """ Init LSTM_model Model.
 
         @param embed_size (int): Embedding size (dimensionality)
@@ -133,11 +133,14 @@ if __name__ == '__main__':
             pred = pred.cpu()
             y=y.cpu()
             for t, p in zip(y.view(-1), pred.view(-1)):
-                print("t", t)
-                print("p", p)
-                confusion_matrix[t.long(), p.long()] += 1
+                # print("t", t)
+                # print("p", p)
+                if p <= 2:
+                    #this should not be necessary
+                    confusion_matrix[t.long(), p.long()] += 1
                 index += 1
             print(confusion_matrix)
+            print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
             correct += (pred == y).float().sum()
             total += y.shape[0]
             sum_loss += loss.item()*y.shape[0]
@@ -147,7 +150,6 @@ if __name__ == '__main__':
         # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
         # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
         # plt.show()
-        # print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
 
         return sum_loss/total, correct/total, sum_rmse/total
     
