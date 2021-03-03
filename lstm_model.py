@@ -192,8 +192,8 @@ if __name__ == '__main__':
                     lengths_without_pad.append(elem.index(pad_token_index))
                 else:
                     lengths_without_pad.append(max_len_padded_seq)
-            # y_pred = model(x, torch.LongTensor(lengths_without_pad))
-            y_pred = model(x, l)
+            y_pred = model(x, torch.LongTensor(lengths_without_pad))
+            # y_pred = model(x, l)
             optimizer.zero_grad()
             loss = F.cross_entropy(y_pred, y)
             loss.backward()
