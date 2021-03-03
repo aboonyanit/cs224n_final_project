@@ -138,7 +138,7 @@ if __name__ == '__main__':
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     pad_token_index = len(vocab) - 1
-    max_len_padded_seq = 500
+    max_len_padded_seq = 400
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -188,6 +188,7 @@ if __name__ == '__main__':
             y = y.long()
             lengths_without_pad = []
             for elem in x.tolist():
+                # Get actual lengths of lyrics without pad tokens
                 if pad_token_index in elem:
                     lengths_without_pad.append(elem.index(pad_token_index))
                 else:
