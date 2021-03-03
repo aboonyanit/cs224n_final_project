@@ -95,7 +95,7 @@ class LSTM_model(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True)
-        self.linear = nn.Linear(hidden_dim, 5)
+        self.linear = nn.Linear(hidden_dim, n_classes) #changed this from 5 to n_classes
         self.dropout = nn.Dropout(0.2)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -138,14 +138,15 @@ if __name__ == '__main__':
                 if p <= 2:
                     #this should not be necessary
                     confusion_matrix[t.long(), p.long()] += 1
+                else:
+                    print("greater")
                 index += 1
-            print(confusion_matrix)
-            print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
             correct += (pred == y).float().sum()
             total += y.shape[0]
             sum_loss += loss.item()*y.shape[0]
             sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
-    
+        print(confusion_matrix)
+        print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
 
         # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
         # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
@@ -156,7 +157,7 @@ if __name__ == '__main__':
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     pad_token_index = len(vocab) - 1
-    max_len_padded_seq = 400
+    max_len_padded_seq = 500
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
