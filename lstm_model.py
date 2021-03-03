@@ -175,64 +175,68 @@ if __name__ == '__main__':
 
     train_dataset = LyricsDataset(x_train, y_train)
     val_dataset = LyricsDataset(x_val, y_val)
-    train_loader = data_utils.DataLoader(train_dataset, batch_size=128, shuffle=True)
-    val_loader = data_utils.DataLoader(val_dataset, batch_size=128, shuffle=True)  
-
-    #hyperparameters
-    learning_rate = 0.00001
-    epochs = 60
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    epochs_arr = []
-    train_losses = []
-
-    #train model
-    print("training...")
-    parameters = filter(lambda p: p.requires_grad, model.parameters())
-    for i in range(epochs):
-        epochs_arr.append(i)
-        model.train()
-        sum_loss = 0.0
-        total = 0
-        for x, y, l in train_loader:
-            x = x.long()
-            y = torch.argmax(y, 1)
-            y = y.long()
-            lengths_without_pad = []
-            for elem in x.tolist():
-                # Get actual lengths of lyrics without pad tokens
-                if pad_token_index in elem:
-                    lengths_without_pad.append(elem.index(pad_token_index))
-                else:
-                    lengths_without_pad.append(max_len_padded_seq)
-            y_pred = model(x, torch.LongTensor(lengths_without_pad))
-            # y_pred = model(x, l)
-            optimizer.zero_grad()
-            loss = F.cross_entropy(y_pred, y)
-            loss.backward()
-            optimizer.step()
-            sum_loss += loss.item() * y.shape[0]
-            total += y.shape[0]
-           # print("train loss ", sum_loss/total)
-        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
-        train_losses.append(sum_loss/total)
-        print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
-        plt.plot(epochs_arr, train_losses)
-        plt.savefig('train_loss.png')   
 
 
-    # nb_classes = 3
-    # confusion_matrix = torch.zeros(nb_classes, nb_classes)
-    # index = 0
-    # with torch.no_grad():
-    #     for t, p in zip(target.view(-1), eval_y_pred.view(-1)):
-    #         # if t.item() != p.item():
-    #             # print("Target: ", t) #Use next 3 lines to print out example predictions
-    #             # print("Prediction: ", p)
-    #             # print(testCSV["Lyric"][index])
-    #         confusion_matrix[t.long(), p.long()] += 1
-    #         index += 1
+    for learning_rate in [0.001, 0.0001, 0.00001, 0.000001]:
+        for batch_size in [64, 128]:
+            train_loader = data_utils.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            val_loader = data_utils.DataLoader(val_dataset, batch_size=batch_size, shuffle=True)  
 
-    # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
-    # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
-    # plt.show()
-    # print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
+            #hyperparameters
+            # learning_rate = 0.00001
+            epochs = 20
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+            epochs_arr = []
+            train_losses = []
+
+            #train model
+            print("training...")
+            parameters = filter(lambda p: p.requires_grad, model.parameters())
+            for i in range(epochs):
+                epochs_arr.append(i)
+                model.train()
+                sum_loss = 0.0
+                total = 0
+                for x, y, l in train_loader:
+                    x = x.long()
+                    y = torch.argmax(y, 1)
+                    y = y.long()
+                    lengths_without_pad = []
+                    for elem in x.tolist():
+                        # Get actual lengths of lyrics without pad tokens
+                        if pad_token_index in elem:
+                            lengths_without_pad.append(elem.index(pad_token_index))
+                        else:
+                            lengths_without_pad.append(max_len_padded_seq)
+                    y_pred = model(x, torch.LongTensor(lengths_without_pad))
+                    # y_pred = model(x, l)
+                    optimizer.zero_grad()
+                    loss = F.cross_entropy(y_pred, y)
+                    loss.backward()
+                    optimizer.step()
+                    sum_loss += loss.item() * y.shape[0]
+                    total += y.shape[0]
+                # print("train loss ", sum_loss/total)
+                val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
+                train_losses.append(sum_loss/total)
+                print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
+                plt.plot(epochs_arr, train_losses)
+                pltName = "lr_"+str(learning_rate)+"_batch_"+str(batch_size)+"_train_loss.png"
+                plt.savefig(pltName)
+
+            # nb_classes = 3
+            # confusion_matrix = torch.zeros(nb_classes, nb_classes)
+            # index = 0
+            # with torch.no_grad():
+            #     for t, p in zip(target.view(-1), eval_y_pred.view(-1)):
+            #         # if t.item() != p.item():
+            #             # print("Target: ", t) #Use next 3 lines to print out example predictions
+            #             # print("Prediction: ", p)
+            #             # print(testCSV["Lyric"][index])
+            #         confusion_matrix[t.long(), p.long()] += 1
+            #         index += 1
+
+            # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
+            # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
+            # plt.show()
+            # print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
