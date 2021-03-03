@@ -98,23 +98,21 @@ class LSTM_model(nn.Module):
         self.linear = nn.Linear(hidden_dim, n_classes) #changed this from 5 to n_classes
         self.dropout = nn.Dropout(0.2)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.relu = nn.ReLU() 
 
 
     def forward(self, lyrics:torch.LongTensor, totalLen ) -> torch.Tensor:#List[List[str]]
         # Convert list of lists into tensors
-        #(number of samples in batch/x_train, length of padded sentence) * (length of padded sentence, 3)
-        # dimensions of lyrics * dimensions of linear layer
         x = self.embedding(lyrics)
         x = self.dropout(x)
         x_pack = pack_padded_sequence(x, totalLen, batch_first=True, enforce_sorted=False)
-        out_pack, (ht, ct) = self.lstm(x)
-        out = self.linear(ht[-1]).to(device)
-        
+        out_pack, (hidden_state, cell_state) = self.lstm(x)
+        out = self.linear(hidden_state[-1]).to(device)
+        out = self.relu(out)
         return out
 
-if __name__ == '__main__':
-    # test model on val set
     def validation_metrics (model, valid_dl):
+        # test model on val set
         model.eval()
         correct = 0
         total = 0
@@ -154,6 +152,8 @@ if __name__ == '__main__':
 
         return sum_loss/total, correct/total, sum_rmse/total
     
+
+if __name__ == '__main__':
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
     pad_token_index = len(vocab) - 1
