@@ -42,7 +42,7 @@ def generate_embeddings(file_path):
     embeddings.append([0] * 100) # Currently made the pad token 100 0's but can change that
     return vocab, embeddings
     
-def to_input_tensor(self, lyrics_list: List[List[str]], device) -> torch.Tensor:
+def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, device) -> torch.Tensor:
     """ Convert list of sentences (words) into tensor with necessary padding for 
     shorter sentences.
 
@@ -53,24 +53,21 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device) -> torch.Tensor:
     """
     lyrics_var = []
     # longest_lyric_len = len(max(lyrics_list, key=len))
-    # longest_lyric_len = 4571
-    longest_lyric_len = 500
     for lyrics in lyrics_list:
-        num_pads_to_add = longest_lyric_len - len(lyrics)
+        num_pads_to_add = max_len_padded_seq - len(lyrics)
         lyrics_indicies = []
         for i, word in enumerate(lyrics):
             if word not in self.word2indicies.keys():
                 lyrics_indicies.append(self.word2indicies['<unk>'])
             else:
                 lyrics_indicies.append(self.word2indicies[word])
-            if i == 499:
+            if i == max_len_padded_seq - 1:
                 break
         lyrics_indicies += ([self.word2indicies['<pad>']] * num_pads_to_add)
         lyrics_var.append(lyrics_indicies)
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
-
-    print(lyrics_var.shape)
     return lyrics_var
+
 class ReviewsDataset(Dataset):
     def __init__(self, X, Y):
         self.X = X.to(device)
@@ -80,7 +77,6 @@ class ReviewsDataset(Dataset):
         return len(self.y)
     
     def __getitem__(self, idx):
-       # tempx = torch.FloatTensor(self.X[idx]).to(device)
         return self.X[idx], self.y[idx], len(self.X[idx])
 
 class LSTM_model(nn.Module):
@@ -141,6 +137,8 @@ if __name__ == '__main__':
     
     print('initializing...')
     vocab, embeddings = generate_embeddings('vectors.txt')
+    pad_token_index = len(vocab) - 1
+    max_len_padded_seq = 600
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -158,12 +156,9 @@ if __name__ == '__main__':
         y_train_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
     for index, row in valCSV.iterrows():
         y_val_csv.append([row["Hip Hop"], row["Pop"], row["Rock"]])
-    #x_val_csv=x_val_csv.cuda()
-    #x_train_csv=x_train_csv.cuda()
-    x_val = to_input_tensor(model, lyrics_list = x_val_csv, device=device).to(device)
-    #x_val = torch.FloatTensor(tval).to(device)
-    x_train = to_input_tensor(model, lyrics_list = x_train_csv, device=device).to(device)
-    #x_train = torch.FloatTensor(ttrain).to(device)
+
+    x_val = to_input_tensor(model, lyrics_list = x_val_csv, max_len_padded_seq=max_len_padded_seq, device=device).to(device)
+    x_train = to_input_tensor(model, lyrics_list = x_train_csv, max_len_padded_seq=max_len_padded_seq, device=device).to(device)
     y_val = torch.Tensor(y_val_csv).to(device)
     y_train =  torch.Tensor(y_train_csv).to(device)
 
@@ -174,7 +169,7 @@ if __name__ == '__main__':
 
     #hyperparameters
     learning_rate = 0.00001
-    epochs = 150
+    epochs = 60
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     epochs_arr = []
     train_losses = []
@@ -183,7 +178,6 @@ if __name__ == '__main__':
     print("training...")
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     for i in range(epochs):
-        #print("epoch ", str(i))
         epochs_arr.append(i)
         model.train()
         sum_loss = 0.0
@@ -192,12 +186,19 @@ if __name__ == '__main__':
             x = x.long()
             y = torch.argmax(y, 1)
             y = y.long()
-            y_pred = model(x, l)
+            lengths_without_pad = []
+            for elem in x.tolist():
+                if pad_token_index in elem:
+                    lengths_without_pad.append(elem.index(pad_token_index))
+                else:
+                    lengths_without_pad.append(max_len_padded_seq)
+            print(lengths_without_pad)
+            y_pred = model(x, torch.LongTensor(lengths_without_pad))
             optimizer.zero_grad()
             loss = F.cross_entropy(y_pred, y)
             loss.backward()
             optimizer.step()
-            sum_loss += loss.item()*y.shape[0]
+            sum_loss += loss.item() * y.shape[0]
             total += y.shape[0]
            # print("train loss ", sum_loss/total)
         val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
@@ -205,18 +206,20 @@ if __name__ == '__main__':
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
     plt.plot(epochs_arr, train_losses)
     plt.savefig('train_loss.png')
-       
-
 
     # nb_classes = 3
     # confusion_matrix = torch.zeros(nb_classes, nb_classes)
+    # index = 0
     # with torch.no_grad():
     #     for t, p in zip(target.view(-1), eval_y_pred.view(-1)):
-    #             confusion_matrix[t.long(), p.long()] += 1
-    # print("confusion matrix")
-    # print(confusion_matrix)
-    # print("per class accuracy", confusion_matrix.diag()/confusion_matrix.sum(1))
+    #         # if t.item() != p.item():
+    #             # print("Target: ", t) #Use next 3 lines to print out example predictions
+    #             # print("Prediction: ", p)
+    #             # print(testCSV["Lyric"][index])
+    #         confusion_matrix[t.long(), p.long()] += 1
+    #         index += 1
 
-
-
-
+    # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
+    # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
+    # plt.show()
+    # print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
