@@ -120,6 +120,9 @@ if __name__ == '__main__':
         total = 0
         sum_loss = 0.0
         sum_rmse = 0.0
+        nb_classes = 3
+        confusion_matrix = torch.zeros(nb_classes, nb_classes)
+        index = 0
         for x, y, l in valid_dl:
             x = x.long()
             y = torch.argmax(y, 1)
@@ -129,10 +132,21 @@ if __name__ == '__main__':
             pred = torch.max(y_hat, 1)[1]
             pred = pred.cpu()
             y=y.cpu()
+            for t, p in zip(y.view(-1), pred.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+                index += 1
+            print(confusion_matrix)
             correct += (pred == y).float().sum()
             total += y.shape[0]
             sum_loss += loss.item()*y.shape[0]
             sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
+    
+
+        # confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
+        # sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
+        # plt.show()
+        # print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
+
         return sum_loss/total, correct/total, sum_rmse/total
     
     print('initializing...')
