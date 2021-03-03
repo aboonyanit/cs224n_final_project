@@ -68,7 +68,7 @@ def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, devi
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
     return lyrics_var
 
-class ReviewsDataset(Dataset):
+class LyricsDataset(Dataset):
     def __init__(self, X, Y):
         self.X = X.to(device)
         self.y = Y.to(device)
@@ -82,7 +82,7 @@ class ReviewsDataset(Dataset):
 class LSTM_model(nn.Module):
     """ Simple LSTM
     """
-    def __init__(self, vocab_size, embedding_dim, embeddings, vocab, hidden_dim, n_classes=3):
+    def __init__(self, vocab_size, embedding_dim, embeddings, vocab, hidden_dim, num_layers, n_classes=3):
         """ Init LSTM_model Model.
 
         @param embed_size (int): Embedding size (dimensionality)
@@ -94,7 +94,7 @@ class LSTM_model(nn.Module):
         super(LSTM_model, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True)
         self.linear = nn.Linear(hidden_dim, 5)
         self.dropout = nn.Dropout(0.2)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     #create model
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, hidden_dim=50)
+    model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, num_layers=2, hidden_dim=50)
     model = model.to(device)
     # get data
     valCSV = pd.read_csv("../cs224n_dataset/validation-data.csv")
@@ -180,8 +180,8 @@ if __name__ == '__main__':
     y_val = torch.Tensor(y_val_csv).to(device)
     y_train =  torch.Tensor(y_train_csv).to(device)
 
-    train_dataset = ReviewsDataset(x_train, y_train)
-    val_dataset = ReviewsDataset(x_val, y_val)
+    train_dataset = LyricsDataset(x_train, y_train)
+    val_dataset = LyricsDataset(x_val, y_val)
     train_loader = data_utils.DataLoader(train_dataset, batch_size=128, shuffle=True)
     val_loader = data_utils.DataLoader(val_dataset, batch_size=128, shuffle=True)  
 
