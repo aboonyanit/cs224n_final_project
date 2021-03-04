@@ -95,7 +95,7 @@ def validation_metrics (model, valid_dl, epoch):
     print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
 
     confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
-    if epoch == 1:
+    if epoch == 19:
         sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
         plt.show()
         plt.savefig("confusion_matrix_unbalanced.png") #does this work?
