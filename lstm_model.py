@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import numpy as np
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # This file creates and runs a Logistic Regression model. It contains methods necessary to generate
 # embeddings and add necessary padding. Small amounts of the code was based off of Assignment 4.
@@ -169,7 +170,7 @@ if __name__ == '__main__':
 
     train_dataset = LyricsDataset(x_train, y_train)
     val_dataset = LyricsDataset(x_val, y_val)
-
+    batch_size=128
     train_loader = data_utils.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = data_utils.DataLoader(val_dataset, batch_size=batch_size, shuffle=True)  
 
