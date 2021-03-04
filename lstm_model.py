@@ -95,7 +95,7 @@ def validation_metrics (model, valid_dl, epoch):
     print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
 
     confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
-    if epoch == 19:
+    if epoch == 49:
         sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
         plt.show()
         plt.savefig("confusion_matrix_unbalanced.png") #does this work?
@@ -128,7 +128,7 @@ class LSTM_model(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0).from_pretrained(torch.FloatTensor(embeddings))
         self.word2indicies = {word: ind for ind, word in enumerate(vocab)}
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True)
-        self.linear = nn.Linear(hidden_dim, n_classes) #changed this from 5 to n_classes
+        self.linear = nn.Linear(hidden_dim, n_classes) 
         self.dropout = nn.Dropout(0.2)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     #hyperparameters
     learning_rate = 0.001
     batch_size = 128    
-    epochs = 20
+    epochs = 50
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     epochs_arr = []
     train_losses = []
