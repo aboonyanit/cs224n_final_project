@@ -220,8 +220,8 @@ if __name__ == '__main__':
                 val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
                 train_losses.append(sum_loss/total)
                 print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
-                plt.plot(epochs_arr, train_losses)
-                pltName = "lr_"+str(learning_rate)+"_batch_"+str(batch_size)+"_train_loss.png"
+                plt.plot(epochs_arr, val_acc)
+                pltName = "lr_"+str(learning_rate)+"_batch_"+str(batch_size)+"_val_acc.png"
                 plt.savefig(pltName)
 
             # nb_classes = 3
