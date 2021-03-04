@@ -153,8 +153,8 @@ if __name__ == '__main__':
     model = LSTM_model(len(vocab), len(embeddings[0]), embeddings, vocab, num_layers=1, hidden_dim=50)
     model = model.to(device)
     # get data
-    valCSV = pd.read_csv("../cs224n_dataset/validation-data.csv")
-    trainCSV = pd.read_csv("../cs224n_dataset/train-data.csv")
+    valCSV = pd.read_csv("../cs224n_dataset/validation-data-unbalanced.csv")
+    trainCSV = pd.read_csv("../cs224n_dataset/train-data-unbalanced.csv")
 
     x_val_csv = [i.split(' ') for i in valCSV["Lyric"].values]
     x_train_csv = [i.split(' ') for i in trainCSV["Lyric"].values]
@@ -216,7 +216,7 @@ if __name__ == '__main__':
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
         training_graph, ax = plt.subplots()
         ax.plot(epochs_arr, train_losses)
-        pltName = "lr_"+str(learning_rate)+"_batch_"+str(batch_size)+"_train_loss.png"
+        pltName = "lr_"+str(learning_rate)+"_batch_"+str(batch_size)+"_train_loss_unbalanced.png"
         training_graph.savefig(pltName)
         plt.close(training_graph)
 
