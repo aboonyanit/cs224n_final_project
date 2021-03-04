@@ -65,7 +65,7 @@ def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, devi
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
     return lyrics_var
 
-def validation_metrics (model, valid_dl):
+def validation_metrics (model, valid_dl, epoch):
     # test model on val set
     model.eval()
     correct = 0
@@ -95,8 +95,10 @@ def validation_metrics (model, valid_dl):
     print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
 
     confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
-    sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
-    plt.savefig("confusion_matrix_unbalanced.png") #does this work?
+    if epoch == 1:
+        sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
+        plt.show()
+        plt.savefig("confusion_matrix_unbalanced.png") #does this work?
 
     return sum_loss/total, correct/total, sum_rmse/total
 
@@ -177,7 +179,7 @@ if __name__ == '__main__':
     #hyperparameters
     learning_rate = 0.001
     batch_size = 128    
-    epochs = 20
+    epochs = 2
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     epochs_arr = []
     train_losses = []
@@ -209,7 +211,7 @@ if __name__ == '__main__':
             sum_loss += loss.item() * y.shape[0]
             total += y.shape[0]
         # print("train loss ", sum_loss/total)
-        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader)
+        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i)
         train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
         plt.plot(epochs_arr, train_losses)
