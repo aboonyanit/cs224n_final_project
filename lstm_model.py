@@ -92,7 +92,7 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
                 print("Target: ", t) #Use next 3 lines to print out example predictions - seems like target is printing out 1 when it shouldn't be
                 print("Prediction: ", p)
                 lyrics_indicies = x[index]
-                print([vocab[i] for i in lyrics_indicies])
+                print([vocab[i] + " " for i in lyrics_indicies])
                 # print(valCSV["Lyric"][index])
                 sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
             confusion_matrix[t.long(), p.long()] += 1
@@ -222,7 +222,7 @@ if __name__ == '__main__':
             sum_loss += loss.item() * y.shape[0]
             total += y.shape[0]
         # print("train loss ", sum_loss/total)
-        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i, valCSV)
+        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i, valCSV, vocab)
         train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
         training_graph, ax = plt.subplots()
