@@ -65,7 +65,7 @@ def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, devi
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
     return lyrics_var
 
-def validation_metrics (model, valid_dl, epoch):
+def validation_metrics (model, valid_dl, epoch, y_val_csv):
     # test model on val set
     model.eval()
     correct = 0
@@ -85,6 +85,10 @@ def validation_metrics (model, valid_dl, epoch):
         pred = pred.cpu()
         y=y.cpu()
         for t, p in zip(y.view(-1), pred.view(-1)):
+            if t.item() != p.item():
+                print("Target: ", t) #Use next 3 lines to print out example predictions
+                print("Prediction: ", p)
+                print(y_val_csv["Lyric"][index])
             confusion_matrix[t.long(), p.long()] += 1
             index += 1
         correct += (pred == y).float().sum()
@@ -172,7 +176,7 @@ if __name__ == '__main__':
 
     train_dataset = LyricsDataset(x_train, y_train)
     val_dataset = LyricsDataset(x_val, y_val)
-    batch_size=128
+    batch_size = 128
     train_loader = data_utils.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = data_utils.DataLoader(val_dataset, batch_size=batch_size, shuffle=True)  
 
@@ -211,7 +215,7 @@ if __name__ == '__main__':
             sum_loss += loss.item() * y.shape[0]
             total += y.shape[0]
         # print("train loss ", sum_loss/total)
-        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i)
+        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i, y_val_csv)
         train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
         training_graph, ax = plt.subplots()
