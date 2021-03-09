@@ -65,7 +65,7 @@ def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, devi
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
     return lyrics_var
 
-def validation_metrics (model, valid_dl, epoch, valCSV):
+def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
     # test model on val set
     model.eval()
     correct = 0
@@ -74,7 +74,6 @@ def validation_metrics (model, valid_dl, epoch, valCSV):
     sum_rmse = 0.0
     nb_classes = 3
     confusion_matrix = torch.zeros(nb_classes, nb_classes)
-    index = 0
     sum_mistake_lens = 0
     for x, y, l in valid_dl:
         x = x.long()
@@ -85,13 +84,16 @@ def validation_metrics (model, valid_dl, epoch, valCSV):
         pred = torch.max(y_hat, 1)[1]
         pred = pred.cpu()
         y=y.cpu()
+        index = 0
         print("pred", pred)
         print(y)
         for t, p in zip(y.view(-1), pred.view(-1)):
-            if t.item() != p.item() and epoch > 45:
+            if t.item() != p.item():
                 print("Target: ", t) #Use next 3 lines to print out example predictions - seems like target is printing out 1 when it shouldn't be
                 print("Prediction: ", p)
-                print(valCSV["Lyric"][index])
+                lyrics_indicies = x[index]
+                print([vocab[i] for i in lyrics_indicies])
+                # print(valCSV["Lyric"][index])
                 sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
             confusion_matrix[t.long(), p.long()] += 1
             index += 1
