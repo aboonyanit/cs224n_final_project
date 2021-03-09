@@ -86,7 +86,7 @@ def validation_metrics (model, valid_dl, epoch, valCSV):
         pred = pred.cpu()
         y=y.cpu()
         for t, p in zip(y.view(-1), pred.view(-1)):
-            if t.item() != p.item():
+            if t.item() != p.item() and epoch > 45:
                 print("Target: ", t) #Use next 3 lines to print out example predictions
                 print("Prediction: ", p)
                 print(valCSV["Lyric"][index])
