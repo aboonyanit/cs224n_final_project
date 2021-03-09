@@ -74,7 +74,7 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
     sum_rmse = 0.0
     nb_classes = 3
     confusion_matrix = torch.zeros(nb_classes, nb_classes)
-    sum_mistake_lens = 0
+    num_pad_tokens = 0
     for x, y, l in valid_dl:
         x = x.long()
         y = torch.argmax(y, 1)
@@ -88,12 +88,14 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
         print("pred", pred)
         print(y)
         for t, p in zip(y.view(-1), pred.view(-1)):
-            if t.item() != p.item():
+            if t.item() != p.item() and epoch >= 45:
                 print("Target: ", t) #Use next 3 lines to print out example predictions - seems like target is printing out 1 when it shouldn't be
                 print("Prediction: ", p)
                 lyrics_indicies = x[index]
                 lyric = ""
                 for i in lyrics_indicies:
+                    if i == len(vocab) - 1:
+                        num_pad_tokens += 1
                     lyric += vocab[i] + " "
                 print(lyric)
                 # print(valCSV["Lyric"][index])
