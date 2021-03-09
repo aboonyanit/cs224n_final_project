@@ -92,7 +92,10 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
                 print("Target: ", t) #Use next 3 lines to print out example predictions - seems like target is printing out 1 when it shouldn't be
                 print("Prediction: ", p)
                 lyrics_indicies = x[index]
-                print([vocab[i] + " " for i in lyrics_indicies])
+                lyric = ""
+                for i in lyrics_indicies:
+                    lyric += vocab[i] + " "
+                print(lyric)
                 # print(valCSV["Lyric"][index])
                 sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
             confusion_matrix[t.long(), p.long()] += 1
