@@ -159,8 +159,8 @@ class LSTM_model(nn.Module):
         output_unpacked, output_lengths = pad_packed_sequence(out_pack, batch_first=True)
         # out_pack, (hidden_state, cell_state) = self.lstm2(x)
 
-        out = self.linear(hidden_state[-1]).to(device)
-        #out = self.linear(output_unpacked[:, -1, :]).to(device)
+        #out = self.linear(hidden_state[-1]).to(device)
+        out = self.linear(output_unpacked[:, -1, :]).to(device)
         return out
 
 if __name__ == '__main__':
@@ -198,7 +198,7 @@ if __name__ == '__main__':
 
     #hyperparameters
     learning_rate = 0.00001
-    epochs = 60
+    epochs = 50
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     epochs_arr = []
     train_losses = []
@@ -235,7 +235,7 @@ if __name__ == '__main__':
         train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
         plt.plot(epochs_arr, train_losses)
-        plt.savefig('train_loss.png')   
+        plt.savefig('bidir_train_loss.png')   
 
 
     # nb_classes = 3
