@@ -85,9 +85,11 @@ def validation_metrics (model, valid_dl, epoch, valCSV):
         pred = torch.max(y_hat, 1)[1]
         pred = pred.cpu()
         y=y.cpu()
+        print("pred", pred)
+        print(y)
         for t, p in zip(y.view(-1), pred.view(-1)):
             if t.item() != p.item() and epoch > 45:
-                print("Target: ", t) #Use next 3 lines to print out example predictions
+                print("Target: ", t) #Use next 3 lines to print out example predictions - seems like target is printing out 1 when it shouldn't be
                 print("Prediction: ", p)
                 print(valCSV["Lyric"][index])
                 sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
