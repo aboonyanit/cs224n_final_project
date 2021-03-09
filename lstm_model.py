@@ -75,6 +75,7 @@ def validation_metrics (model, valid_dl, epoch, valCSV):
     nb_classes = 3
     confusion_matrix = torch.zeros(nb_classes, nb_classes)
     index = 0
+    sum_mistake_lens = 0
     for x, y, l in valid_dl:
         x = x.long()
         y = torch.argmax(y, 1)
@@ -89,12 +90,14 @@ def validation_metrics (model, valid_dl, epoch, valCSV):
                 print("Target: ", t) #Use next 3 lines to print out example predictions
                 print("Prediction: ", p)
                 print(valCSV["Lyric"][index])
+                sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
             confusion_matrix[t.long(), p.long()] += 1
             index += 1
         correct += (pred == y).float().sum()
         total += y.shape[0]
         sum_loss += loss.item()*y.shape[0]
         sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
+    print("Average length of lyric mis-prediction: ", sum_mistake_lens / (total - correct))
     print(confusion_matrix)
     print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
 
