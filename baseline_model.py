@@ -84,7 +84,8 @@ def to_input_tensor(self, lyrics_list: List[List[str]], device: torch.device) ->
     return lyrics_var
 
 class LogisticRegression(nn.Module):
-    """ Simple Logistic Regression Model
+    """ Simple Logistic Regression Model: parts of this code were based on this tutorial:
+     https://medium.com/dair-ai/implementing-a-logistic-regression-model-from-scratch-with-pytorch-24ea062cd856
     """
     def __init__(self, vocab_size, embedding_dim, embeddings, vocab, embeddings_dict, n_classes=3):
         """ Init LogisticRegression Model.
