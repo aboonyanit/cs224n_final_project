@@ -25,22 +25,22 @@ def generate_lyrics_mult_genres():
     last = df_lyric_genre.iloc[0]
     for i in range(1, df_lyric_genre.shape[0]):
         if (df_lyric_genre.iloc[i, 0] == last[0]):
-            # print(' '.join(last[0].split()[: 499]))
+            shortened_lyric = ' '.join(last[0].split()[: 499])
             if df_lyric_genre.iloc[i, 1] == 1:
                 if last[2] == 1:
-                    multi_genre_dict[last[0]] = [0, 1]
+                    multi_genre_dict[shortened_lyric] = [0, 1]
                 if last[3] == 1:
-                    multi_genre_dict[last[0]] = [0, 2]
+                    multi_genre_dict[shortened_lyric] = [0, 2]
             elif df_lyric_genre.iloc[i, 2] == 1:
                 if last[1] == 1:
-                    multi_genre_dict[last[0]] = [0, 1]
+                    multi_genre_dict[shortened_lyric] = [0, 1]
                 if last[3] == 1:
-                    multi_genre_dict[last[0]] = [1, 2]
+                    multi_genre_dict[shortened_lyric] = [1, 2]
             else:
                 if last[1] == 1:
-                    multi_genre_dict[last[0]] = [0, 2]
+                    multi_genre_dict[shortened_lyric] = [0, 2]
                 if last[2] == 1:
-                    multi_genre_dict[last[0]] = [1, 2]
+                    multi_genre_dict[shortened_lyric] = [1, 2]
         last = df_lyric_genre.iloc[i]
 
     print(len(multi_genre_dict))
@@ -101,7 +101,6 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict)
     sum_rmse = 0.0
     nb_classes = 3
     confusion_matrix = torch.zeros(nb_classes, nb_classes)
-    num_pad_tokens = 0
     mult_genre_correct = 0
     for x, y, l in valid_dl:
         x = x.long()
@@ -125,13 +124,12 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict)
                     if i == len(vocab) - 1:
                         break
                     lyric += vocab[i] + " "
-                lyric = lyric[:-1]
+                lyric = lyric[:-1] # get rid of last sapce
                 if lyric in multi_genre_dict:
-                    print("dup genre")
                     if p.item() in multi_genre_dict[lyric]:
                         #actually correct
                         mult_genre_correct += 1
-                        print("actually correct")
+                        # print("actually correct")
                         confusion_matrix[t.long(), p.long()] -= 1
             confusion_matrix[t.long(), p.long()] += 1
             index += 1
@@ -149,7 +147,7 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict)
         plt.show()
         plt.savefig("confusion_matrix_balanced.png")
 
-    return sum_loss/total, correct/total, sum_rmse/total
+    return sum_loss/total, (correct + mult_genre_correct) /total, sum_rmse/total
 
 class LyricsDataset(Dataset):
     def __init__(self, X, Y):
