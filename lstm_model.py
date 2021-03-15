@@ -115,22 +115,23 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict)
         #print("pred", pred)
         #print(y)
         for t, p in zip(y.view(-1), pred.view(-1)):
-            if t.item() != p.item():
-                #print("Target: ", t)
-                #print("Prediction: ", p)
-                lyrics_indicies = x[index]
-                lyric = ""
-                for i in lyrics_indicies:
-                    if i == len(vocab) - 1:
-                        break
-                    lyric += vocab[i] + " "
-                lyric = lyric[:-1] # get rid of last sapce
-                if lyric in multi_genre_dict:
-                    if p.item() in multi_genre_dict[lyric]:
-                        #actually correct
-                        mult_genre_correct += 1
-                        # print("actually correct")
-                        confusion_matrix[t.long(), p.long()] -= 1
+            if epoch >= 48:
+                if t.item() != p.item():
+                    #print("Target: ", t)
+                    #print("Prediction: ", p)
+                    lyrics_indicies = x[index]
+                    lyric = ""
+                    for i in lyrics_indicies:
+                        if i == len(vocab) - 1:
+                            break
+                        lyric += vocab[i] + " "
+                    lyric = lyric[:-1] # get rid of last sapce
+                    if lyric in multi_genre_dict:
+                        if p.item() in multi_genre_dict[lyric]:
+                            #actually correct
+                            mult_genre_correct += 1
+                            # print("actually correct")
+                            confusion_matrix[t.long(), p.long()] -= 1
             confusion_matrix[t.long(), p.long()] += 1
             index += 1
 
