@@ -102,6 +102,7 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict)
     nb_classes = 3
     confusion_matrix = torch.zeros(nb_classes, nb_classes)
     num_pad_tokens = 0
+    mult_genre_correct = 0
     for x, y, l in valid_dl:
         x = x.long()
         y = torch.argmax(y, 1)
@@ -112,37 +113,36 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict)
         pred = pred.cpu()
         y=y.cpu()
         index = 0
-        print("pred", pred)
-        print(y)
+        #print("pred", pred)
+        #print(y)
         for t, p in zip(y.view(-1), pred.view(-1)):
-            if t.item() != p.item() and epoch >= 48:
-                print("Target: ", t)
-                print("Prediction: ", p)
+            if t.item() != p.item():
+                #print("Target: ", t)
+                #print("Prediction: ", p)
                 lyrics_indicies = x[index]
                 lyric = ""
                 for i in lyrics_indicies:
                     if i == len(vocab) - 1:
                         break
                     lyric += vocab[i] + " "
-                print(lyric)
-                sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
-            index += 1
-            if lyric in multi_genre_dict.keys():
-                print("dup genre")
-                if p.item() in multi_genre_dict[lyric]:
-                    #actually correct
-                    print("actually correct")
-                    break
+                lyric = lyric[:-1]
+                if lyric in multi_genre_dict:
+                    print("dup genre")
+                    if p.item() in multi_genre_dict[lyric]:
+                        #actually correct
+                        mult_genre_correct += 1
+                        print("actually correct")
+                        confusion_matrix[t.long(), p.long()] -= 1
             confusion_matrix[t.long(), p.long()] += 1
+            index += 1
 
         correct += (pred == y).float().sum()
         total += y.shape[0]
         sum_loss += loss.item()*y.shape[0]
         sum_rmse += np.sqrt(mean_squared_error(pred, y.unsqueeze(-1)))*y.shape[0]
-    print("Average length of lyric mis-prediction: ", sum_mistake_lens / (total - correct))
     print(confusion_matrix)
     print("Per class accuracy", confusion_matrix.diag() / confusion_matrix.sum(1))
-
+    print("mult genre correct", mult_genre_correct)
     confusion_matrix_df = pd.DataFrame(confusion_matrix, index=['Hip Hop', 'Pop', 'Rock'], columns=['Hip Hop', 'Pop', 'Rock']).astype("float")
     if epoch == 49:
         sns.heatmap(confusion_matrix_df, annot=True, fmt='g')
