@@ -18,6 +18,33 @@ import seaborn as sns
 # This file creates and runs a Logistic Regression model. It contains methods necessary to generate
 # embeddings and add necessary padding. Small amounts of the code was based off of Assignment 4.
 
+def generate_lyrics_mult_genres():
+    multi_genre_dict = {}
+    lyrics = []
+    df_lyric_genre = pd.read_csv('../cs224n_dataset/lyric-genre-data-punctuation-separated.csv')
+    last = df_lyric_genre.iloc[0]
+    for i in range(1, df_lyric_genre.shape[0]):
+        if (df_lyric_genre.iloc[i, 0] == last[0]):
+            # print(' '.join(last[0].split()[: 499]))
+            if df_lyric_genre.iloc[i, 1] == 1:
+                if last[2] == 1:
+                    multi_genre_dict[last[0]] = [0, 1]
+                if last[3] == 1:
+                    multi_genre_dict[last[0]] = [0, 2]
+            elif df_lyric_genre.iloc[i, 2] == 1:
+                if last[1] == 1:
+                    multi_genre_dict[last[0]] = [0, 1]
+                if last[3] == 1:
+                    multi_genre_dict[last[0]] = [1, 2]
+            else:
+                if last[1] == 1:
+                    multi_genre_dict[last[0]] = [0, 2]
+                if last[2] == 1:
+                    multi_genre_dict[last[0]] = [1, 2]
+        last = df_lyric_genre.iloc[i]
+
+    print(len(multi_genre_dict))
+    return multi_genre_dict
 
 def generate_embeddings(file_path):
     """ Generates an embeddings vector which contains the pre-trained GloVe vectors we generated.
@@ -65,7 +92,7 @@ def to_input_tensor(self, lyrics_list: List[List[str]], max_len_padded_seq, devi
     lyrics_var = torch.FloatTensor(lyrics_var).to(device)
     return lyrics_var
 
-def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
+def validation_metrics (model, valid_dl, epoch, valCSV, vocab, multi_genre_dict):
     # test model on val set
     model.eval()
     correct = 0
@@ -88,20 +115,26 @@ def validation_metrics (model, valid_dl, epoch, valCSV, vocab):
         print("pred", pred)
         print(y)
         for t, p in zip(y.view(-1), pred.view(-1)):
-            if t.item() != p.item() and epoch >= 45:
-                print("Target: ", t) #Use next 3 lines to print out example predictions - seems like target is printing out 1 when it shouldn't be
+            if t.item() != p.item() and epoch >= 48:
+                print("Target: ", t)
                 print("Prediction: ", p)
                 lyrics_indicies = x[index]
                 lyric = ""
                 for i in lyrics_indicies:
                     if i == len(vocab) - 1:
-                        num_pad_tokens += 1
+                        break
                     lyric += vocab[i] + " "
                 print(lyric)
-                # print(valCSV["Lyric"][index])
                 sum_mistake_lens += len(valCSV["Lyric"][index].split(" "))
-            confusion_matrix[t.long(), p.long()] += 1
             index += 1
+            if lyric in multi_genre_dict.keys():
+                print("dup genre")
+                if p.item() in multi_genre_dict[lyric]:
+                    #actually correct
+                    print("actually correct")
+                    break
+            confusion_matrix[t.long(), p.long()] += 1
+
         correct += (pred == y).float().sum()
         total += y.shape[0]
         sum_loss += loss.item()*y.shape[0]
@@ -160,6 +193,7 @@ class LSTM_model(nn.Module):
 
 if __name__ == '__main__':
     print('initializing...')
+    multi_genre_dict = generate_lyrics_mult_genres()
     vocab, embeddings = generate_embeddings('vectors.txt')
     pad_token_index = len(vocab) - 1
     max_len_padded_seq = 500
@@ -227,7 +261,7 @@ if __name__ == '__main__':
             sum_loss += loss.item() * y.shape[0]
             total += y.shape[0]
         # print("train loss ", sum_loss/total)
-        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i, valCSV, vocab)
+        val_loss, val_acc, val_rmse = validation_metrics(model, val_loader, i, valCSV, vocab, multi_genre_dict)
         train_losses.append(sum_loss/total)
         print("epoch %.3f, train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (i, sum_loss/total, val_loss, val_acc, val_rmse))
         training_graph, ax = plt.subplots()
